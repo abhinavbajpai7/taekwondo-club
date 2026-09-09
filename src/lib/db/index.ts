@@ -11,196 +11,12 @@ import {
   getTodayDateString,
 } from '../utils';
 
-// Seed demo data for zero-config offline/local development
-const INITIAL_STUDENTS: Student[] = [
-  {
-    id: 'stu-001',
-    student_code: 'STU001',
-    name: 'Rahul Sharma',
-    date_of_birth: '2012-04-10',
-    parent_name: 'Rajesh Sharma',
-    parent_phone: '9876543210',
-    address: 'Sector 4, Gomti Nagar, Lucknow',
-    joining_date: '2026-06-01',
-    monthly_fee: 1000,
-    active: true,
-    created_at: new Date('2026-06-01').toISOString(),
-    updated_at: new Date('2026-06-01').toISOString(),
-  },
-  {
-    id: 'stu-002',
-    student_code: 'STU002',
-    name: 'Ananya Singh',
-    date_of_birth: '2013-09-15',
-    parent_name: 'Vikram Singh',
-    parent_phone: '9812345678',
-    address: 'Aliganj, Lucknow',
-    joining_date: '2026-07-01',
-    monthly_fee: 1200,
-    active: true,
-    created_at: new Date('2026-07-01').toISOString(),
-    updated_at: new Date('2026-07-01').toISOString(),
-  },
-  {
-    id: 'stu-003',
-    student_code: 'STU003',
-    name: 'Arjun Verma',
-    date_of_birth: '2011-12-05',
-    parent_name: 'Sunil Verma',
-    parent_phone: '9935123456',
-    address: 'Indira Nagar, Lucknow',
-    joining_date: '2026-06-15',
-    monthly_fee: 1000,
-    active: true,
-    created_at: new Date('2026-06-15').toISOString(),
-    updated_at: new Date('2026-06-15').toISOString(),
-  },
-  {
-    id: 'stu-004',
-    student_code: 'STU004',
-    name: 'Priya Patel',
-    date_of_birth: '2014-02-20',
-    parent_name: 'Amit Patel',
-    parent_phone: '9765432109',
-    address: 'Mahanagar, Lucknow',
-    joining_date: '2026-08-01',
-    monthly_fee: 1000,
-    active: true,
-    created_at: new Date('2026-08-01').toISOString(),
-    updated_at: new Date('2026-08-01').toISOString(),
-  },
-  {
-    id: 'stu-005',
-    student_code: 'STU005',
-    name: 'Kabir Khan',
-    date_of_birth: '2010-07-18',
-    parent_name: 'Zubair Khan',
-    parent_phone: '9654321098',
-    address: 'Hazratganj, Lucknow',
-    joining_date: '2026-05-01',
-    monthly_fee: 1500,
-    active: false, // inactive student example
-    created_at: new Date('2026-05-01').toISOString(),
-    updated_at: new Date('2026-05-01').toISOString(),
-  },
-];
+// Fresh start with 0 students so the instructor can manually register all real students
+const INITIAL_STUDENTS: Student[] = [];
+const INITIAL_ATTENDANCE: AttendanceRecord[] = [];
+const INITIAL_PAYMENTS: PaymentRecord[] = [];
 
-const INITIAL_ATTENDANCE: AttendanceRecord[] = [
-  {
-    id: 'att-1',
-    student_id: 'stu-001',
-    attendance_date: '2026-09-08',
-    status: 'present',
-    marked_at: new Date('2026-09-08T17:00:00').toISOString(),
-  },
-  {
-    id: 'att-2',
-    student_id: 'stu-002',
-    attendance_date: '2026-09-08',
-    status: 'present',
-    marked_at: new Date('2026-09-08T17:00:00').toISOString(),
-  },
-  {
-    id: 'att-3',
-    student_id: 'stu-003',
-    attendance_date: '2026-09-08',
-    status: 'absent',
-    marked_at: new Date('2026-09-08T17:00:00').toISOString(),
-  },
-  {
-    id: 'att-4',
-    student_id: 'stu-004',
-    attendance_date: '2026-09-08',
-    status: 'present',
-    marked_at: new Date('2026-09-08T17:00:00').toISOString(),
-  },
-  {
-    id: 'att-5',
-    student_id: 'stu-001',
-    attendance_date: '2026-09-07',
-    status: 'present',
-    marked_at: new Date('2026-09-07T17:00:00').toISOString(),
-  },
-  {
-    id: 'att-6',
-    student_id: 'stu-002',
-    attendance_date: '2026-09-07',
-    status: 'absent',
-    marked_at: new Date('2026-09-07T17:00:00').toISOString(),
-  },
-  {
-    id: 'att-7',
-    student_id: 'stu-003',
-    attendance_date: '2026-09-07',
-    status: 'present',
-    marked_at: new Date('2026-09-07T17:00:00').toISOString(),
-  },
-];
-
-const INITIAL_PAYMENTS: PaymentRecord[] = [
-  {
-    id: 'pay-1',
-    student_id: 'stu-001',
-    payment_date: '2026-07-02',
-    amount: 1000,
-    payment_method: 'upi',
-    receipt_number: 'REC-0701',
-    notes: 'July Fee',
-    created_at: new Date('2026-07-02').toISOString(),
-  },
-  {
-    id: 'pay-2',
-    student_id: 'stu-001',
-    payment_date: '2026-08-03',
-    amount: 1000,
-    payment_method: 'upi',
-    receipt_number: 'REC-0801',
-    notes: 'August Fee',
-    created_at: new Date('2026-08-03').toISOString(),
-  },
-  {
-    id: 'pay-3',
-    student_id: 'stu-001',
-    payment_date: '2026-09-01',
-    amount: 500,
-    payment_method: 'cash',
-    receipt_number: 'REC-0901',
-    notes: 'Partial September Fee',
-    created_at: new Date('2026-09-01').toISOString(),
-  },
-  {
-    id: 'pay-4',
-    student_id: 'stu-002',
-    payment_date: '2026-07-05',
-    amount: 1200,
-    payment_method: 'bank_transfer',
-    receipt_number: 'REC-0702',
-    notes: 'July Fee',
-    created_at: new Date('2026-07-05').toISOString(),
-  },
-  {
-    id: 'pay-5',
-    student_id: 'stu-002',
-    payment_date: '2026-08-04',
-    amount: 1200,
-    payment_method: 'upi',
-    receipt_number: 'REC-0802',
-    notes: 'August Fee',
-    created_at: new Date('2026-08-04').toISOString(),
-  },
-  {
-    id: 'pay-6',
-    student_id: 'stu-003',
-    payment_date: '2026-07-01',
-    amount: 1000,
-    payment_method: 'cash',
-    receipt_number: 'REC-0703',
-    notes: 'July Fee',
-    created_at: new Date('2026-07-01').toISOString(),
-  },
-];
-
-// In-Memory Storage Cache for local mock
+// In-Memory Storage Cache for local storage
 class LocalDbStore {
   students: Student[] = [];
   attendance: AttendanceRecord[] = [];
@@ -210,17 +26,26 @@ class LocalDbStore {
   init() {
     if (this.isInitialized) return;
     if (typeof window !== 'undefined') {
+      // Force wipe previous demo data if upgrading to fresh mode
+      const isFresh = localStorage.getItem('tkd_fresh_mode_v2');
+      if (!isFresh) {
+        localStorage.removeItem('tkd_students');
+        localStorage.removeItem('tkd_attendance');
+        localStorage.removeItem('tkd_payments');
+        localStorage.setItem('tkd_fresh_mode_v2', 'true');
+      }
+
       const storedStudents = localStorage.getItem('tkd_students');
       const storedAttendance = localStorage.getItem('tkd_attendance');
       const storedPayments = localStorage.getItem('tkd_payments');
 
-      this.students = storedStudents ? JSON.parse(storedStudents) : [...INITIAL_STUDENTS];
-      this.attendance = storedAttendance ? JSON.parse(storedAttendance) : [...INITIAL_ATTENDANCE];
-      this.payments = storedPayments ? JSON.parse(storedPayments) : [...INITIAL_PAYMENTS];
+      this.students = storedStudents ? JSON.parse(storedStudents) : [];
+      this.attendance = storedAttendance ? JSON.parse(storedAttendance) : [];
+      this.payments = storedPayments ? JSON.parse(storedPayments) : [];
     } else {
-      this.students = [...INITIAL_STUDENTS];
-      this.attendance = [...INITIAL_ATTENDANCE];
-      this.payments = [...INITIAL_PAYMENTS];
+      this.students = [];
+      this.attendance = [];
+      this.payments = [];
     }
     this.isInitialized = true;
   }
@@ -231,6 +56,13 @@ class LocalDbStore {
       localStorage.setItem('tkd_attendance', JSON.stringify(this.attendance));
       localStorage.setItem('tkd_payments', JSON.stringify(this.payments));
     }
+  }
+
+  resetAll() {
+    this.students = [];
+    this.attendance = [];
+    this.payments = [];
+    this.persist();
   }
 }
 
@@ -532,5 +364,10 @@ export const db = {
       totalFeesDue,
       averageAttendanceRate,
     };
+  },
+
+  async resetAllData(): Promise<void> {
+    localStore.init();
+    localStore.resetAll();
   },
 };

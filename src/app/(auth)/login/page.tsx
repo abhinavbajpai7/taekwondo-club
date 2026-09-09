@@ -9,7 +9,7 @@ export default function LoginPage() {
   const [tab, setTab] = useState<'admin' | 'student'>('admin');
   const [adminEmail, setAdminEmail] = useState('admin@tkd.com');
   const [adminPassword, setAdminPassword] = useState('admin123');
-  const [studentCode, setStudentCode] = useState('STU001');
+  const [studentCode, setStudentCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -177,23 +177,6 @@ export default function LoginPage() {
               <span>{loading ? 'Verifying Code...' : 'Access My Student Portal'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
-
-            {/* Quick student selectors for testing */}
-            <div className="pt-3 border-t border-slate-800/80">
-              <p className="text-xs text-slate-400 text-center mb-2">Test with demo students:</p>
-              <div className="flex justify-center gap-2">
-                {['STU001', 'STU002', 'STU003'].map((code) => (
-                  <button
-                    key={code}
-                    type="button"
-                    onClick={() => setStudentCode(code)}
-                    className="text-xs px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
-                  >
-                    {code}
-                  </button>
-                ))}
-              </div>
-            </div>
           </form>
         )}
       </div>

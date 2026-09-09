@@ -71,15 +71,15 @@ export default function HomePage() {
             onClick={handleQuickAdmin}
             className="flex-1 px-5 py-3.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-sm shadow-lg shadow-red-600/30 transition flex items-center justify-center gap-2"
           >
-            <span>Launch as Admin</span>
+            <span>Instructor Portal</span>
             <ArrowRight className="w-4 h-4" />
           </button>
-          <button
-            onClick={handleQuickStudent}
+          <Link
+            href="/login"
             className="flex-1 px-5 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold text-sm transition flex items-center justify-center gap-2"
           >
-            <span>Student Portal (STU001)</span>
-          </button>
+            <span>Student Sign In</span>
+          </Link>
         </div>
 
         {/* Feature Grid */}

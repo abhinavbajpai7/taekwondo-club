@@ -156,6 +156,31 @@ export default function SettingsPage() {
           <span>Download Emergency Backup (CSV)</span>
         </button>
       </div>
+
+      {/* Reset to 0 Students */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+        <h2 className="text-sm font-semibold text-white uppercase tracking-wider flex items-center gap-2">
+          <RefreshCw className="w-4 h-4 text-red-500" />
+          <span>Roster Reset / Fresh Start</span>
+        </h2>
+        <p className="text-xs text-slate-400">
+          Wipes all students, attendance registers, and payment history to start completely fresh with 0 students.
+        </p>
+
+        <button
+          type="button"
+          onClick={async () => {
+            if (window.confirm('Are you sure you want to reset all data and start completely fresh with 0 students?')) {
+              await db.resetAllData();
+              window.location.reload();
+            }
+          }}
+          className="px-4 py-2.5 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 text-xs font-semibold transition flex items-center gap-2"
+        >
+          <RefreshCw className="w-4 h-4" />
+          <span>Reset All to 0 Students</span>
+        </button>
+      </div>
     </div>
   );
 }
