@@ -453,7 +453,7 @@ export default function FeesManagementPage() {
                   <input
                     type="number"
                     min="1"
-                    step="50"
+                    step="any"
                     required
                     value={paymentAmount}
                     onChange={(e) => setPaymentAmount(e.target.value)}

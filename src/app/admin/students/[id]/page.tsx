@@ -293,7 +293,7 @@ export default function EditStudentPage({ params }: { params: Promise<{ id: stri
           <input
             type="number"
             min="0"
-            step="100"
+            step="any"
             required
             value={formData.monthly_fee}
             onChange={(e) => setFormData({ ...formData, monthly_fee: Number(e.target.value) })}
