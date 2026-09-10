@@ -5,10 +5,8 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import { Student, PaymentRecord, DashboardStats } from '@/lib/types';
 import {
-  formatCurrency,
   formatDate,
   getTodayDateString,
-  calculateFeeSummary,
 } from '@/lib/utils';
 import {
   Users,
@@ -52,13 +50,10 @@ export default function AdminDashboardPage() {
     loadDashboard();
   }, [loadDashboard]);
 
-  // Find top students with outstanding dues
+  // Find top students with pending fee status
   const studentsWithDues = students
-    .filter((s) => s.active)
-    .map((s) => calculateFeeSummary(s, recentPayments))
-    .filter((s) => s.currentDue > 0)
-    .sort((a, b) => b.currentDue - a.currentDue)
-    .slice(0, 4);
+    .filter((s) => s.active && (s.fee_status === 'pending' || !s.fee_status))
+    .slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -131,33 +126,33 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Fees Collected */}
+        {/* Fees Paid */}
         <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium">Fees Collected</span>
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
-              <TrendingUp className="w-4 h-4" />
+            <span className="text-xs text-slate-400 font-medium">Fees Paid</span>
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+              <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-black text-white">
-              {stats ? formatCurrency(stats.totalFeesCollected) : '—'}
+            <div className="text-2xl sm:text-3xl font-black text-emerald-400">
+              {stats?.feesPaidCount ?? 0}
             </div>
-            <p className="text-[11px] text-slate-500 mt-0.5">Total all-time receipts</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Students up to date</p>
           </div>
         </div>
 
-        {/* Fees Due */}
+        {/* Fees Pending */}
         <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium">Outstanding Dues</span>
+            <span className="text-xs text-slate-400 font-medium">Fees Pending</span>
             <div className="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center">
               <AlertCircle className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
             <div className="text-2xl sm:text-3xl font-black text-red-400">
-              {stats ? formatCurrency(stats.totalFeesDue) : '—'}
+              {stats?.feesPendingCount ?? 0}
             </div>
             <p className="text-[11px] text-slate-500 mt-0.5">
               Avg club attendance: {stats?.averageAttendanceRate ?? 85}%
@@ -229,34 +224,36 @@ export default function AdminDashboardPage() {
           {studentsWithDues.length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-400">
               <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-1.5" />
-              All active students are up to date with fees!
+              All active students are marked Paid!
             </div>
           ) : (
             <div className="divide-y divide-slate-800/80">
-              {studentsWithDues.map((item) => (
-                <div key={item.student.id} className="py-3 flex items-center justify-between">
+              {studentsWithDues.map((student) => (
+                <div key={student.id} className="py-3 flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-[11px] font-bold text-red-400">
-                        {item.student.student_code}
+                        {student.student_code}
                       </span>
-                      <span className="font-semibold text-xs text-white">{item.student.name}</span>
+                      <span className="font-semibold text-xs text-white">{student.name}</span>
                     </div>
                     <span className="text-[11px] text-slate-400">
-                      Phone: {item.student.parent_phone}
+                      Next Due: {student.next_fee_due_date ? formatDate(student.next_fee_due_date) : 'Pending assignment'}
                     </span>
                   </div>
 
                   <div className="text-right">
-                    <span className="font-bold text-xs text-red-400 block">
-                      {formatCurrency(item.currentDue)}
+                    <span className="inline-block px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-bold text-[10px] mb-1">
+                      Pending
                     </span>
-                    <Link
-                      href="/admin/fees"
-                      className="text-[10px] text-slate-400 hover:text-slate-200 underline"
-                    >
-                      Collect
-                    </Link>
+                    <div>
+                      <Link
+                        href="/admin/fees"
+                        className="text-[10px] text-slate-400 hover:text-slate-200 underline"
+                      >
+                        Manage
+                      </Link>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -286,7 +283,7 @@ export default function AdminDashboardPage() {
             </div>
           ) : (
             <div className="divide-y divide-slate-800/80">
-              {recentPayments.map((pay) => {
+              {recentPayments.slice(0, 5).map((pay) => {
                 const student = students.find((s) => s.id === pay.student_id);
                 return (
                   <div key={pay.id} className="py-3 flex items-center justify-between">
@@ -300,8 +297,8 @@ export default function AdminDashboardPage() {
                     </div>
 
                     <div className="text-right">
-                      <span className="font-bold text-xs text-emerald-400">
-                        +{formatCurrency(pay.amount)}
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[10px] uppercase tracking-wider">
+                        Paid • {pay.payment_method}
                       </span>
                     </div>
                   </div>

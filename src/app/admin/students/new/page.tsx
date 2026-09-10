@@ -4,35 +4,39 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { db } from '@/lib/db';
-import { getTodayDateString } from '@/lib/utils';
-import { ArrowLeft, UserPlus, Save, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { getTodayDateString, addDays } from '@/lib/utils';
+import { ArrowLeft, UserPlus, Save, AlertCircle, CheckCircle2, KeyRound } from 'lucide-react';
 
 export default function NewStudentPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [nextCode, setNextCode] = useState('STU001');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
+    student_code: 'STU001',
+    password: '1234',
     name: '',
     date_of_birth: '',
     parent_name: '',
     parent_phone: '',
     address: '',
     joining_date: getTodayDateString(),
+    next_fee_due_date: addDays(getTodayDateString(), 30),
     monthly_fee: 1000,
+    fee_status: 'pending' as 'paid' | 'pending',
   });
 
   useEffect(() => {
-    // Estimate next code preview
+    // Suggest next code
     const calculateCode = async () => {
       const all = await db.getStudents();
       const codes = all
         .map((s) => parseInt(s.student_code.replace('STU', ''), 10))
         .filter((n) => !isNaN(n));
       const nextNum = (codes.length > 0 ? Math.max(...codes) : 0) + 1;
-      setNextCode(`STU${String(nextNum).padStart(3, '0')}`);
+      const suggested = `STU${String(nextNum).padStart(3, '0')}`;
+      setFormData((prev) => ({ ...prev, student_code: suggested }));
     };
     calculateCode();
   }, []);
@@ -42,6 +46,14 @@ export default function NewStudentPage() {
     setError(null);
 
     // Validation
+    if (!formData.student_code.trim()) {
+      setError('Student ID is required.');
+      return;
+    }
+    if (!formData.password.trim()) {
+      setError('Student password is required.');
+      return;
+    }
     if (!formData.name.trim()) {
       setError('Student name is required.');
       return;
@@ -54,16 +66,12 @@ export default function NewStudentPage() {
       setError('Parent phone number is required.');
       return;
     }
-    if (formData.monthly_fee < 0) {
-      setError('Monthly fee cannot be negative.');
-      return;
-    }
 
     setLoading(true);
     try {
       await db.saveStudent({
         ...formData,
-        student_code: nextCode,
+        student_code: formData.student_code.trim().toUpperCase(),
         active: true,
       });
 
@@ -93,7 +101,7 @@ export default function NewStudentPage() {
             <span>Register New Student</span>
           </h1>
           <p className="text-xs text-slate-400">
-            Student details are recorded once and linked to all future attendance & payments.
+            Set student credentials, membership details, and initial fee due date.
           </p>
         </div>
       </div>
@@ -114,15 +122,45 @@ export default function NewStudentPage() {
 
       {/* Registration Form */}
       <form onSubmit={handleSubmit} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-7 space-y-5 shadow-xl">
-        {/* Auto Generated Code Banner */}
-        <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-          <div>
-            <span className="text-xs text-slate-400 block">Assigned Student Code</span>
-            <span className="text-xs text-slate-500">Auto-generated sequence</span>
+        {/* Credentials Section */}
+        <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-red-400">
+            <KeyRound className="w-4 h-4" />
+            <span>Student Portal Credentials (Set by Admin)</span>
           </div>
-          <span className="font-mono text-base font-extrabold px-3 py-1 rounded-lg bg-red-600/20 text-red-400 border border-red-500/30">
-            {nextCode}
-          </span>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                Student ID / Code *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.student_code}
+                onChange={(e) => setFormData({ ...formData, student_code: e.target.value.toUpperCase() })}
+                placeholder="e.g. STU001"
+                className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50 uppercase"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                Student Password *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="e.g. 1234"
+                className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
+              />
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-400">
+            The student will use this exact Student ID and Password to sign in.
+          </p>
         </div>
 
         {/* Student Name */}
@@ -135,7 +173,7 @@ export default function NewStudentPage() {
             required
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="e.g. Rahul Sharma"
+            placeholder="e.g. Lakshay Singh"
             className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
           />
         </div>
@@ -179,7 +217,7 @@ export default function NewStudentPage() {
               required
               value={formData.parent_name}
               onChange={(e) => setFormData({ ...formData, parent_name: e.target.value })}
-              placeholder="e.g. Rajesh Sharma"
+              placeholder="e.g. Rajesh Singh"
               className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
             />
           </div>
@@ -208,28 +246,46 @@ export default function NewStudentPage() {
             type="text"
             value={formData.address}
             onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-            placeholder="e.g. Gomti Nagar, Lucknow"
+            placeholder="e.g. Lucknow"
             className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
           />
         </div>
 
-        {/* Monthly Fee */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-            Monthly Fee (₹) *
-          </label>
-          <input
-            type="number"
-            min="0"
-            step="any"
-            required
-            value={formData.monthly_fee}
-            onChange={(e) => setFormData({ ...formData, monthly_fee: Number(e.target.value) })}
-            className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
-          />
-          <p className="text-[11px] text-slate-500 mt-1">
-            Used to automatically calculate monthly outstanding dues for fee tracking.
-          </p>
+        {/* Fee Settings (Decided by Admin) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800">
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+              Fee Amount (₹) (Shown to Student) *
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="any"
+              required
+              value={formData.monthly_fee}
+              onChange={(e) => setFormData({ ...formData, monthly_fee: Number(e.target.value) })}
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
+            />
+            <p className="text-[11px] text-slate-500 mt-1">
+              Visible on student portal so student knows what to pay.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+              Next Fee Due Date (Decided by Admin) *
+            </label>
+            <input
+              type="date"
+              required
+              value={formData.next_fee_due_date}
+              onChange={(e) => setFormData({ ...formData, next_fee_due_date: e.target.value })}
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
+            />
+            <p className="text-[11px] text-slate-500 mt-1">
+              Deadline date shown on student portal.
+            </p>
+          </div>
         </div>
 
         {/* Action Buttons */}

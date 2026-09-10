@@ -3,13 +3,17 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
-import { Shield, User, Lock, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
+import { Shield, User, Lock, ArrowRight, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const [tab, setTab] = useState<'admin' | 'student'>('admin');
-  const [adminEmail, setAdminEmail] = useState('admin@tkd.com');
-  const [adminPassword, setAdminPassword] = useState('admin123');
+  
+  // All fields start completely empty (NO autofill)
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   const [studentCode, setStudentCode] = useState('');
+  const [studentPassword, setStudentPassword] = useState('');
+  
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -27,7 +31,7 @@ export default function LoginPage() {
     if (res.success) {
       router.push('/admin');
     } else {
-      setError(res.error || 'Failed to sign in as admin');
+      setError(res.error || 'Invalid credentials');
     }
   };
 
@@ -36,13 +40,13 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
 
-    const res = await loginAsStudent(studentCode);
+    const res = await loginAsStudent(studentCode, studentPassword);
     setLoading(false);
 
     if (res.success) {
       router.push('/student');
     } else {
-      setError(res.error || 'Invalid student code');
+      setError(res.error || 'Invalid student credentials');
     }
   };
 
@@ -101,37 +105,33 @@ export default function LoginPage() {
         )}
 
         {tab === 'admin' ? (
-          <form onSubmit={handleAdminSubmit} className="space-y-4">
+          <form onSubmit={handleAdminSubmit} className="space-y-4" autoComplete="off">
             <div>
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                Admin Email
+                Admin Username / Email
               </label>
-              <div className="relative">
-                <input
-                  type="email"
-                  required
-                  value={adminEmail}
-                  onChange={(e) => setAdminEmail(e.target.value)}
-                  placeholder="admin@tkd.com"
-                  className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
-                />
-              </div>
+              <input
+                type="text"
+                required
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
+                placeholder="Enter your username"
+                className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
+              />
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
                 Password
               </label>
-              <div className="relative">
-                <input
-                  type="password"
-                  required
-                  value={adminPassword}
-                  onChange={(e) => setAdminPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
-                />
-              </div>
+              <input
+                type="password"
+                required
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                placeholder="Enter password"
+                className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
+              />
             </div>
 
             <button
@@ -139,22 +139,15 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full py-3.5 px-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-sm shadow-lg shadow-red-600/30 transition flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
             >
-              <span>{loading ? 'Authenticating...' : 'Sign In as Admin'}</span>
+              <span>{loading ? 'Verifying...' : 'Sign In as Admin'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
-
-            <div className="pt-2 text-center">
-              <span className="text-xs text-slate-400 flex items-center justify-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                Default dev credentials: <code className="text-slate-300">admin@tkd.com</code> / <code className="text-slate-300">admin123</code>
-              </span>
-            </div>
           </form>
         ) : (
-          <form onSubmit={handleStudentSubmit} className="space-y-4">
+          <form onSubmit={handleStudentSubmit} className="space-y-4" autoComplete="off">
             <div>
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                Student ID / Code
+                Student ID
               </label>
               <input
                 type="text"
@@ -162,10 +155,24 @@ export default function LoginPage() {
                 value={studentCode}
                 onChange={(e) => setStudentCode(e.target.value.toUpperCase())}
                 placeholder="e.g. STU001"
-                className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50 uppercase tracking-wider font-mono text-center text-lg"
+                className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50 uppercase tracking-wider font-mono text-center text-base"
               />
-              <p className="text-xs text-slate-400 mt-1.5 text-center">
-                Enter the unique code provided at registration (e.g. STU001, STU002, STU003).
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                Student Password
+              </label>
+              <input
+                type="password"
+                required
+                value={studentPassword}
+                onChange={(e) => setStudentPassword(e.target.value)}
+                placeholder="Enter your student password"
+                className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50 text-center"
+              />
+              <p className="text-[11px] text-slate-500 mt-1.5 text-center">
+                Provided by your coach/instructor at registration.
               </p>
             </div>
 
@@ -174,17 +181,17 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full py-3.5 px-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-sm shadow-lg shadow-red-600/30 transition flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
             >
-              <span>{loading ? 'Verifying Code...' : 'Access My Student Portal'}</span>
+              <span>{loading ? 'Verifying...' : 'Access Student Portal'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
         )}
       </div>
 
-      {/* Security badge */}
-      <div className="mt-8 text-center text-xs text-slate-400 flex items-center gap-1.5">
-        <Lock className="w-3.5 h-3.5 text-slate-400" />
-        <span>Secured with Supabase Auth & PostgreSQL Row Level Security</span>
+      {/* Security note */}
+      <div className="mt-8 text-center text-xs text-slate-500 flex items-center gap-1.5">
+        <Lock className="w-3.5 h-3.5" />
+        <span>RTA Club • Protected Portal</span>
       </div>
     </div>
   );

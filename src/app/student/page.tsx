@@ -27,6 +27,7 @@ export default function StudentDashboardPage() {
   const { user } = useAuth();
   const student = user?.student;
 
+  const [currentStudent, setCurrentStudent] = useState(student);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,10 +35,12 @@ export default function StudentDashboardPage() {
   const loadData = useCallback(async () => {
     if (!student) return;
     setLoading(true);
-    const [att, pays] = await Promise.all([
+    const [freshStudent, att, pays] = await Promise.all([
+      db.getStudentById(student.id),
       db.getAttendanceForStudent(student.id),
       db.getPaymentsForStudent(student.id),
     ]);
+    if (freshStudent) setCurrentStudent(freshStudent);
     setAttendance(att);
     setPayments(pays);
     setLoading(false);
@@ -55,11 +58,13 @@ export default function StudentDashboardPage() {
     );
   }
 
+  const activeStudent = currentStudent || student;
+  const isPaid = activeStudent.fee_status === 'paid';
   const presentCount = attendance.filter((a) => a.status === 'present').length;
   const absentCount = attendance.filter((a) => a.status === 'absent').length;
   const totalSessions = attendance.length;
   const attendanceRate = calculateAttendancePercentage(presentCount, totalSessions);
-  const feeSummary = calculateFeeSummary(student, payments);
+  const feeSummary = calculateFeeSummary(activeStudent, payments);
 
   return (
     <div className="space-y-6">
@@ -110,25 +115,86 @@ export default function StudentDashboardPage() {
         <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
           <span className="text-[11px] text-slate-400 flex items-center gap-1 mb-1">
             <CreditCard className="w-3.5 h-3.5 text-amber-400" />
-            Monthly Fee
+            Fee Amount
           </span>
-          <div className="text-2xl font-bold text-white">{formatCurrency(student.monthly_fee)}</div>
-          <p className="text-[10px] text-slate-500">Regular fee</p>
+          <div className="text-2xl font-bold text-white">{formatCurrency(activeStudent.monthly_fee)}</div>
+          <p className="text-[10px] text-slate-500">Scheduled fee</p>
         </div>
 
         <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-          <span className="text-[11px] text-slate-400 mb-1 block">Current Due</span>
-          <div
-            className={`text-2xl font-bold ${
-              feeSummary.currentDue > 0 ? 'text-red-400' : 'text-emerald-400'
-            }`}
-          >
-            {formatCurrency(feeSummary.currentDue)}
+          <span className="text-[11px] text-slate-400 mb-1 block">Fee Status</span>
+          <div className="mt-1">
+            <span
+              className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                isPaid
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  : 'bg-red-500/20 text-red-400 border border-red-500/30'
+              }`}
+            >
+              {isPaid ? 'Fees Paid' : 'Fee Pending'}
+            </span>
           </div>
-          <p className="text-[10px] text-slate-500">
-            {feeSummary.currentDue > 0 ? 'Pending payment' : 'Up to date'}
+          <p className="text-[10px] text-slate-400 mt-1 truncate">
+            {activeStudent.next_fee_due_date
+              ? `Next Due: ${formatDate(activeStudent.next_fee_due_date)}`
+              : 'Next date decided by admin'}
           </p>
         </div>
+      </div>
+
+      {/* Fee Status & Next Submission Deadline Banner */}
+      <div
+        className={`p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg ${
+          isPaid
+            ? 'bg-emerald-950/30 border-emerald-800/40'
+            : 'bg-red-950/30 border-red-800/40'
+        }`}
+      >
+        <div className="flex items-start sm:items-center gap-3">
+          <div
+            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+              isPaid ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+            }`}
+          >
+            <CreditCard className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-slate-300">Fee Status:</span>
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+                  isPaid
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                    : 'bg-red-500/20 text-red-300 border border-red-500/30'
+                }`}
+              >
+                {isPaid ? 'PAID' : 'PENDING'}
+              </span>
+              {isPaid && activeStudent.last_payment_mode && (
+                <span className="text-[11px] text-slate-400">
+                  via <strong className="text-slate-200 uppercase">{activeStudent.last_payment_mode}</strong>
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-slate-300 mt-1.5">
+              Fee Amount: <strong className="text-white font-extrabold">{formatCurrency(activeStudent.monthly_fee)}</strong>
+              {' • '}
+              Next Submission Due Date:{' '}
+              <strong className="text-amber-400 font-extrabold">
+                {activeStudent.next_fee_due_date
+                  ? formatDate(activeStudent.next_fee_due_date)
+                  : 'To be assigned by instructor'}
+              </strong>
+            </p>
+          </div>
+        </div>
+
+        <Link
+          href="/student/fees"
+          className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition shrink-0 text-center border border-slate-700 shadow-sm"
+        >
+          View Fee Details & Receipts
+        </Link>
       </div>
 
       {/* Two Column Layout: Recent Attendance & Fee History */}

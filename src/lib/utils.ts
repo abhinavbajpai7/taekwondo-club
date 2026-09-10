@@ -76,6 +76,9 @@ export function calculateFeeSummary(student: Student, payments: PaymentRecord[])
     monthsActive,
     totalExpected,
     currentDue,
+    feeStatus: student.fee_status || (currentDue > 0 ? 'pending' : 'paid'),
+    nextDueDate: student.next_fee_due_date || addDays(getTodayDateString(), 30),
+    lastPaymentMode: student.last_payment_mode || (studentPayments[0]?.payment_method ?? null),
     payments: studentPayments.sort((a, b) => (b.payment_date > a.payment_date ? 1 : -1)),
   };
 }

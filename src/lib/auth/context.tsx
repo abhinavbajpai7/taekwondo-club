@@ -12,11 +12,43 @@ interface AuthUser {
   student?: Student | null;
 }
 
+interface AdminCredentials {
+  email: string;
+  password: string;
+}
+
+const DEFAULT_ADMIN_CREDS: AdminCredentials = {
+  email: 'instructer@rta.club',
+  password: 'RTA1234',
+};
+
+export function getAdminCredentials(): AdminCredentials {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('tkd_admin_credentials');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.email && parsed.password) return parsed;
+      } catch {
+        // fallback
+      }
+    }
+  }
+  return DEFAULT_ADMIN_CREDS;
+}
+
+export function saveAdminCredentials(creds: AdminCredentials) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('tkd_admin_credentials', JSON.stringify(creds));
+  }
+}
+
 interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
   loginAsAdmin: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
-  loginAsStudent: (studentCode: string) => Promise<{ success: boolean; error?: string }>;
+  loginAsStudent: (studentCode: string, pass: string) => Promise<{ success: boolean; error?: string }>;
+  updateAdminAccount: (email: string, pass: string) => void;
   logout: () => void;
 }
 
@@ -43,15 +75,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loginAsAdmin = async (email: string, pass: string) => {
-    // In production with Supabase, call supabase.auth.signInWithPassword
-    // For universal out-of-the-box demo/dev:
     if (!email || !pass) {
-      return { success: false, error: 'Please provide both email and password.' };
+      return { success: false, error: 'Please provide both admin username and password.' };
+    }
+
+    const currentCreds = getAdminCredentials();
+    const cleanEmail = email.trim().toLowerCase();
+    const targetEmail = currentCreds.email.trim().toLowerCase();
+
+    if (cleanEmail !== targetEmail || pass !== currentCreds.password) {
+      return { success: false, error: 'Invalid admin username or password.' };
     }
 
     const adminUser: AuthUser = {
       id: 'admin-1',
-      email: email,
+      email: currentCreds.email,
       role: 'admin',
     };
 
@@ -60,9 +98,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { success: true };
   };
 
-  const loginAsStudent = async (code: string) => {
+  const loginAsStudent = async (code: string, pass: string) => {
     if (!code) {
-      return { success: false, error: 'Please enter your Student Code.' };
+      return { success: false, error: 'Please enter your Student ID.' };
+    }
+    if (!pass) {
+      return { success: false, error: 'Please enter your password.' };
     }
 
     const cleanCode = code.trim().toUpperCase();
@@ -74,7 +115,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!found) {
       return {
         success: false,
-        error: `Student with code "${cleanCode}" not found. Try STU001 or check with your instructor.`,
+        error: `Student with ID "${cleanCode}" not found. Please check with your instructor.`,
+      };
+    }
+
+    const expectedPassword = found.password || '1234';
+    if (pass !== expectedPassword) {
+      return {
+        success: false,
+        error: 'Incorrect student password. Please verify and try again.',
       };
     }
 
@@ -87,6 +136,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(studentUser);
     localStorage.setItem('tkd_auth_session', JSON.stringify(studentUser));
     return { success: true };
+  };
+
+  const updateAdminAccount = (newEmail: string, newPass: string) => {
+    const updated = { email: newEmail.trim(), password: newPass };
+    saveAdminCredentials(updated);
+    if (user?.role === 'admin') {
+      const updatedUser = { ...user, email: updated.email };
+      setUser(updatedUser);
+      localStorage.setItem('tkd_auth_session', JSON.stringify(updatedUser));
+    }
   };
 
   const logout = () => {
@@ -105,7 +164,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } else {
       if (user.role === 'student' && pathname.startsWith('/admin')) {
-        // Prevent student from accessing admin routes
         router.push('/student');
       }
       if (pathname === '/login') {
@@ -115,7 +173,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user, loading, pathname, router]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginAsAdmin, loginAsStudent, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        loginAsAdmin,
+        loginAsStudent,
+        updateAdminAccount,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

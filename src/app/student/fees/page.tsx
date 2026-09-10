@@ -4,13 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { db } from '@/lib/db';
 import { PaymentRecord } from '@/lib/types';
-import { formatCurrency, formatDate, calculateFeeSummary } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import { CreditCard, Receipt, CheckCircle2, AlertCircle, Smartphone, Banknote, Building } from 'lucide-react';
 
 export default function StudentFeesPage() {
   const { user } = useAuth();
   const student = user?.student;
 
+  const [currentStudent, setCurrentStudent] = useState(student);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,7 +19,11 @@ export default function StudentFeesPage() {
     const load = async () => {
       if (!student) return;
       setLoading(true);
-      const data = await db.getPaymentsForStudent(student.id);
+      const [freshStudent, data] = await Promise.all([
+        db.getStudentById(student.id),
+        db.getPaymentsForStudent(student.id),
+      ]);
+      if (freshStudent) setCurrentStudent(freshStudent);
       setPayments(data);
       setLoading(false);
     };
@@ -29,7 +34,8 @@ export default function StudentFeesPage() {
     return <div className="py-16 text-center text-slate-400">Please sign in as a student.</div>;
   }
 
-  const feeSummary = calculateFeeSummary(student, payments);
+  const activeStudent = currentStudent || student;
+  const isPaid = activeStudent.fee_status === 'paid';
 
   return (
     <div className="space-y-6">
@@ -40,39 +46,59 @@ export default function StudentFeesPage() {
           <span>My Fee Summary & Receipts</span>
         </h1>
         <p className="text-xs sm:text-sm text-slate-400">
-          Transparent accounting of monthly club fees and digital receipts.
+          Transparent accounting of club fees, next submission due dates, and digital receipts.
         </p>
       </div>
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Fee Amount */}
         <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm">
-          <span className="text-xs text-slate-400 font-medium">Monthly Fee</span>
-          <div className="text-2xl font-bold text-white mt-1">
-            {formatCurrency(student.monthly_fee)}
+          <span className="text-xs text-slate-400 font-medium block">Fees Amount</span>
+          <div className="text-2xl font-black text-white mt-1">
+            {formatCurrency(activeStudent.monthly_fee)}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Per training month</p>
+          <p className="text-[11px] text-slate-500 mt-1">Per training cycle</p>
         </div>
 
+        {/* Card 2: Fee Status */}
         <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm">
-          <span className="text-xs text-slate-400 font-medium">Total Paid to Date</span>
-          <div className="text-2xl font-bold text-emerald-400 mt-1">
-            {formatCurrency(feeSummary.totalPaid)}
-          </div>
-          <p className="text-[11px] text-slate-500 mt-1">{payments.length} payments recorded</p>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm">
-          <span className="text-xs text-slate-400 font-medium">Outstanding Due</span>
-          <div
-            className={`text-2xl font-bold mt-1 ${
-              feeSummary.currentDue > 0 ? 'text-red-400' : 'text-emerald-400'
-            }`}
-          >
-            {formatCurrency(feeSummary.currentDue)}
+          <span className="text-xs text-slate-400 font-medium block">Payment Status</span>
+          <div className="mt-1.5">
+            <span
+              className={`inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
+                isPaid
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  : 'bg-red-500/20 text-red-400 border border-red-500/30'
+              }`}
+            >
+              {isPaid ? 'PAID' : 'PENDING'}
+            </span>
           </div>
           <p className="text-[11px] text-slate-500 mt-1">
-            {feeSummary.currentDue > 0 ? 'Please clear with instructor' : 'Fully cleared'}
+            {isPaid ? 'Marked Paid by Admin' : 'Awaiting payment'}
+          </p>
+        </div>
+
+        {/* Card 3: Next Submission Deadline */}
+        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm">
+          <span className="text-xs text-slate-400 font-medium block">Next Submission Due Date</span>
+          <div className="text-lg sm:text-xl font-bold text-amber-400 mt-1 truncate">
+            {activeStudent.next_fee_due_date
+              ? formatDate(activeStudent.next_fee_due_date)
+              : 'Pending Assignment'}
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">Decided by Admin</p>
+        </div>
+
+        {/* Card 4: Last Payment Mode */}
+        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm">
+          <span className="text-xs text-slate-400 font-medium block">Last Payment Mode</span>
+          <div className="text-lg sm:text-xl font-bold text-slate-200 mt-1 uppercase">
+            {activeStudent.last_payment_mode || '—'}
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">
+            {payments.length} verified receipts
           </p>
         </div>
       </div>

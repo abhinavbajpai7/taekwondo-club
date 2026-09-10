@@ -4,6 +4,7 @@ import {
   AttendanceRecord,
   PaymentRecord,
   DashboardStats,
+  PaymentMethod,
 } from '../types';
 import {
   calculateAttendancePercentage,
@@ -151,6 +152,7 @@ export const db = {
     const newStudent: Student = {
       id: studentData.id || `stu-${Date.now()}`,
       student_code: studentData.student_code || generatedCode,
+      password: studentData.password || '1234',
       name: studentData.name || '',
       date_of_birth: studentData.date_of_birth || null,
       parent_name: studentData.parent_name || '',
@@ -159,6 +161,9 @@ export const db = {
       joining_date: studentData.joining_date || getTodayDateString(),
       monthly_fee: Number(studentData.monthly_fee) || 1000,
       active: studentData.active !== undefined ? studentData.active : true,
+      fee_status: studentData.fee_status || 'pending',
+      next_fee_due_date: studentData.next_fee_due_date || null,
+      last_payment_mode: studentData.last_payment_mode || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -337,15 +342,8 @@ export const db = {
       activeStudents.length
     );
 
-    const payments = await this.getAllPayments();
-    const totalFeesCollected = payments.reduce((sum, p) => sum + Number(p.amount), 0);
-
-    // Sum total expected and current dues across active students
-    let totalFeesDue = 0;
-    activeStudents.forEach((st) => {
-      const summary = calculateFeeSummary(st, payments);
-      totalFeesDue += summary.currentDue;
-    });
+    const feesPaidCount = activeStudents.filter((s) => s.fee_status === 'paid').length;
+    const feesPendingCount = activeStudents.filter((s) => s.fee_status !== 'paid').length;
 
     // Average attendance rate across past 30 days
     localStore.init();
@@ -360,13 +358,60 @@ export const db = {
       presentToday,
       absentToday,
       attendancePercentageToday,
-      totalFeesCollected,
-      totalFeesDue,
+      feesPaidCount,
+      feesPendingCount,
       averageAttendanceRate,
     };
   },
 
+  async updateStudentFeeStatus(
+    studentId: string,
+    status: 'paid' | 'pending',
+    paymentMode?: PaymentMethod,
+    nextDueDate?: string
+  ): Promise<Student | null> {
+    const updatePayload: Partial<Student> = {
+      fee_status: status,
+      last_payment_mode: paymentMode || null,
+      next_fee_due_date: nextDueDate || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    const supabase = createClient();
+    if (supabase) {
+      const { data } = await supabase
+        .from('students')
+        .update(updatePayload)
+        .eq('id', studentId)
+        .select()
+        .single();
+      if (data) return data as Student;
+    }
+
+    localStore.init();
+    const index = localStore.students.findIndex((s) => s.id === studentId);
+    if (index !== -1) {
+      localStore.students[index] = {
+        ...localStore.students[index],
+        ...updatePayload,
+      };
+      localStore.persist();
+      return localStore.students[index];
+    }
+    return null;
+  },
+
   async resetAllData(): Promise<void> {
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        await supabase.from('attendance').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        await supabase.from('payments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        await supabase.from('students').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      } catch (err) {
+        console.error('Failed to wipe Supabase cloud data:', err);
+      }
+    }
     localStore.init();
     localStore.resetAll();
   },

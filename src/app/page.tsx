@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth/context';
 import { Shield, Users, CalendarCheck, CreditCard, ArrowRight, Smartphone } from 'lucide-react';
 
 export default function HomePage() {
-  const { user, loading, loginAsAdmin, loginAsStudent } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -15,16 +15,6 @@ export default function HomePage() {
       router.push(user.role === 'admin' ? '/admin' : '/student');
     }
   }, [user, loading, router]);
-
-  const handleQuickAdmin = async () => {
-    await loginAsAdmin('admin@tkd.com', 'admin123');
-    router.push('/admin');
-  };
-
-  const handleQuickStudent = async () => {
-    await loginAsStudent('STU001');
-    router.push('/student');
-  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between">
@@ -67,13 +57,13 @@ export default function HomePage() {
 
         {/* Quick Launch Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md justify-center mb-10">
-          <button
-            onClick={handleQuickAdmin}
+          <Link
+            href="/login"
             className="flex-1 px-5 py-3.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-sm shadow-lg shadow-red-600/30 transition flex items-center justify-center gap-2"
           >
             <span>Instructor Portal</span>
             <ArrowRight className="w-4 h-4" />
-          </button>
+          </Link>
           <Link
             href="/login"
             className="flex-1 px-5 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold text-sm transition flex items-center justify-center gap-2"
