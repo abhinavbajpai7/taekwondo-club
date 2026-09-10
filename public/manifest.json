@@ -1,12 +1,12 @@
 {
-  "name": "Taekwondo Club Attendance & Fees PWA",
-  "short_name": "TKD Club",
+  "name": "RTA Taekwondo Club — Attendance & Fees",
+  "short_name": "RTA Club",
   "description": "Progressive Web App for Taekwondo club attendance register and fee management",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#020617",
-  "theme_color": "#0f172a",
+  "background_color": "#060910",
+  "theme_color": "#060910",
   "categories": ["sports", "productivity", "education"],
   "icons": [
     {
