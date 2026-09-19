@@ -107,34 +107,67 @@ export const db = {
   },
 
   async saveStudent(studentData: Partial<Student>): Promise<Student> {
+    // Sanitize empty strings to null for PostgreSQL date and text columns
+    const sanitized: Partial<Student> = {
+      ...studentData,
+      date_of_birth:
+        studentData.date_of_birth && studentData.date_of_birth.trim() !== ''
+          ? studentData.date_of_birth.trim()
+          : null,
+      address:
+        studentData.address && studentData.address.trim() !== ''
+          ? studentData.address.trim()
+          : null,
+      next_fee_due_date:
+        studentData.next_fee_due_date && studentData.next_fee_due_date.trim() !== ''
+          ? studentData.next_fee_due_date.trim()
+          : null,
+      last_payment_mode: studentData.last_payment_mode || null,
+      monthly_fee: Number(studentData.monthly_fee) || 1000,
+    };
+
     const supabase = createClient();
     if (supabase) {
-      if (studentData.id) {
+      if (sanitized.id) {
         const { data, error } = await supabase
           .from('students')
-          .update(studentData)
-          .eq('id', studentData.id)
+          .update(sanitized)
+          .eq('id', sanitized.id)
           .select()
           .single();
-        if (!error && data) return data as Student;
+        if (error) {
+          console.error('Supabase student update error:', error);
+          if (error.code === '23505') {
+            throw new Error(`Student ID "${sanitized.student_code}" is already in use by another student. Please choose a different ID.`);
+          }
+          throw new Error(error.message || 'Failed to update student in database');
+        }
+        if (data) return data as Student;
       } else {
         const { data, error } = await supabase
           .from('students')
-          .insert(studentData)
+          .insert(sanitized)
           .select()
           .single();
-        if (!error && data) return data as Student;
+        if (error) {
+          console.error('Supabase student insert error:', error);
+          if (error.code === '23505') {
+            throw new Error(`Student ID "${sanitized.student_code}" is already in use by another student. Please choose a different ID.`);
+          }
+          throw new Error(error.message || 'Failed to save student in database');
+        }
+        if (data) return data as Student;
       }
     }
 
     localStore.init();
-    if (studentData.id) {
+    if (sanitized.id) {
       // Edit existing
-      const index = localStore.students.findIndex((s) => s.id === studentData.id);
+      const index = localStore.students.findIndex((s) => s.id === sanitized.id);
       if (index !== -1) {
         localStore.students[index] = {
           ...localStore.students[index],
-          ...studentData,
+          ...sanitized,
           updated_at: new Date().toISOString(),
         } as Student;
         localStore.persist();
@@ -144,26 +177,26 @@ export const db = {
 
     // Generate new student code STU001, STU002...
     const codes = localStore.students
-      .map((s) => parseInt(s.student_code.replace('STU', ''), 10))
+      .map((s) => parseInt(s.student_code.replace(/[^0-9]/g, ''), 10))
       .filter((n) => !isNaN(n));
     const nextNum = (codes.length > 0 ? Math.max(...codes) : 0) + 1;
     const generatedCode = `STU${String(nextNum).padStart(3, '0')}`;
 
     const newStudent: Student = {
-      id: studentData.id || `stu-${Date.now()}`,
-      student_code: studentData.student_code || generatedCode,
-      password: studentData.password || '1234',
-      name: studentData.name || '',
-      date_of_birth: studentData.date_of_birth || null,
-      parent_name: studentData.parent_name || '',
-      parent_phone: studentData.parent_phone || '',
-      address: studentData.address || '',
-      joining_date: studentData.joining_date || getTodayDateString(),
-      monthly_fee: Number(studentData.monthly_fee) || 1000,
-      active: studentData.active !== undefined ? studentData.active : true,
-      fee_status: studentData.fee_status || 'pending',
-      next_fee_due_date: studentData.next_fee_due_date || null,
-      last_payment_mode: studentData.last_payment_mode || null,
+      id: sanitized.id || `stu-${Date.now()}`,
+      student_code: sanitized.student_code || generatedCode,
+      password: sanitized.password || '1234',
+      name: sanitized.name || '',
+      date_of_birth: sanitized.date_of_birth || null,
+      parent_name: sanitized.parent_name || '',
+      parent_phone: sanitized.parent_phone || '',
+      address: sanitized.address || null,
+      joining_date: sanitized.joining_date || getTodayDateString(),
+      monthly_fee: Number(sanitized.monthly_fee) || 1000,
+      active: sanitized.active !== undefined ? sanitized.active : true,
+      fee_status: sanitized.fee_status || 'pending',
+      next_fee_due_date: sanitized.next_fee_due_date || null,
+      last_payment_mode: sanitized.last_payment_mode || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

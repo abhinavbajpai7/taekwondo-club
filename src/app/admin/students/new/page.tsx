@@ -14,7 +14,7 @@ export default function NewStudentPage() {
   const [success, setSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
-    student_code: 'STU001',
+    student_code: '',
     password: '1234',
     name: '',
     date_of_birth: '',
@@ -32,11 +32,14 @@ export default function NewStudentPage() {
     const calculateCode = async () => {
       const all = await db.getStudents();
       const codes = all
-        .map((s) => parseInt(s.student_code.replace('STU', ''), 10))
+        .map((s) => parseInt(s.student_code.replace(/[^0-9]/g, ''), 10))
         .filter((n) => !isNaN(n));
       const nextNum = (codes.length > 0 ? Math.max(...codes) : 0) + 1;
       const suggested = `STU${String(nextNum).padStart(3, '0')}`;
-      setFormData((prev) => ({ ...prev, student_code: suggested }));
+      setFormData((prev) => ({
+        ...prev,
+        student_code: prev.student_code || suggested,
+      }));
     };
     calculateCode();
   }, []);
