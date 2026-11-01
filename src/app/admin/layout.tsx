@@ -29,7 +29,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, logout } = useAuth();
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row pb-16 md:pb-0">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row md:pb-0">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-slate-900 border-r border-slate-800 shrink-0">
         <div className="p-5 border-b border-slate-800 flex items-center gap-3">
@@ -105,8 +105,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto min-w-0 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+      <main className="flex-1 overflow-y-auto min-w-0 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-28 md:pb-8">
         {children}
+        {/* Physical non-collapsible bottom spacer to guarantee fixed mobile nav bar never overlaps content */}
+        <div className="h-28 md:hidden w-full shrink-0" aria-hidden="true" />
       </main>
 
       {/* Mobile Bottom Navigation Bar (Optimized for One-Handed Gym Use) */}

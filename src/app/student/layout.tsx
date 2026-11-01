@@ -18,7 +18,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   const { user, logout } = useAuth();
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col pb-24 md:pb-8">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       {/* Header */}
       <header className="px-4 sm:px-6 py-3.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between sticky top-0 z-30 shadow-md">
         <div className="flex items-center gap-3">
@@ -73,7 +73,11 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6">{children}</main>
+      <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 pb-28 md:pb-10">
+        {children}
+        {/* Physical non-collapsible bottom spacer to guarantee fixed mobile nav bar never overlaps content */}
+        <div className="h-28 md:hidden w-full shrink-0" aria-hidden="true" />
+      </main>
 
       {/* Mobile Bottom Bar (iOS/Android touch-friendly) */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 flex items-center justify-around py-2 px-1 z-40 pb-safe">

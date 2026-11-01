@@ -345,7 +345,7 @@ export default function StudentProfilePage() {
         </div>
 
         {/* Submit Button */}
-        <div className="pt-2">
+        <div className="pt-2 pb-6">
           <button
             type="submit"
             disabled={saving}
