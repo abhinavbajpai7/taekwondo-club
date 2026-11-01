@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { db } from '@/lib/db';
 import { Student, PaymentMethod, FeeStatus } from '@/lib/types';
-import { formatDate, getTodayDateString, addDays } from '@/lib/utils';
+import { formatDate, getTodayDateString, addDays, getDaysUntilFeeDue } from '@/lib/utils';
 import {
   CreditCard,
   Search,
@@ -135,6 +135,11 @@ export default function FeesManagementPage() {
             Track paid vs pending student fees, assign next due dates, and record payment modes.
           </p>
         </div>
+
+        <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-xs shadow-sm self-start sm:self-auto">
+          <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+          <span>Automated: Status turns <strong>Pending</strong> 4 days before due date.</span>
+        </div>
       </div>
 
       {/* KPI Cards (No Amounts, Clean Status Counts) */}
@@ -243,6 +248,7 @@ export default function FeesManagementPage() {
           <div className="divide-y divide-slate-800/80">
             {filteredStudents.map((student) => {
               const isPaid = student.fee_status === 'paid';
+              const diffDays = getDaysUntilFeeDue(student.next_fee_due_date);
 
               return (
                 <div
@@ -279,6 +285,15 @@ export default function FeesManagementPage() {
                         </>
                       )}
                     </span>
+                    {!isPaid && diffDays !== null && (
+                      <span className="block text-[10px] font-semibold text-amber-400 mt-0.5">
+                        {diffDays > 0
+                          ? `Due in ${diffDays}d (Auto-set)`
+                          : diffDays === 0
+                          ? 'Due today!'
+                          : `Overdue ${Math.abs(diffDays)}d`}
+                      </span>
+                    )}
                   </div>
 
                   {/* Payment Mode */}

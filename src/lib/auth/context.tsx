@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { UserRole, Student } from '../types';
 import { db } from '../db';
+import { isFeeDueWithinDays } from '../utils';
 
 interface AuthUser {
   id: string;
@@ -67,6 +68,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+        if (
+          parsed.role === 'student' &&
+          parsed.student &&
+          parsed.student.fee_status === 'paid' &&
+          isFeeDueWithinDays(parsed.student.next_fee_due_date, 4)
+        ) {
+          parsed.student.fee_status = 'pending';
+          localStorage.setItem('tkd_auth_session', JSON.stringify(parsed));
+        }
         setUser(parsed);
       } catch {
         localStorage.removeItem('tkd_auth_session');

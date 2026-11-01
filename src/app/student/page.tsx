@@ -9,6 +9,7 @@ import {
   formatCurrency,
   formatDate,
   calculateAttendancePercentage,
+  getDaysUntilFeeDue,
 } from '@/lib/utils';
 import {
   CalendarCheck,
@@ -61,6 +62,7 @@ export default function StudentDashboardPage() {
 
   const activeStudent = currentStudent || student;
   const isPaid = activeStudent.fee_status === 'paid';
+  const daysUntilDue = getDaysUntilFeeDue(activeStudent.next_fee_due_date);
   const presentCount = attendance.filter((a) => a.status === 'present').length;
   const absentCount = attendance.filter((a) => a.status === 'absent').length;
   const totalSessions = attendance.length;
@@ -171,10 +173,26 @@ export default function StudentDashboardPage() {
                 ? formatDate(activeStudent.next_fee_due_date)
                 : 'Pending admin scheduling'}
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">
-              {activeStudent.next_fee_due_date
-                ? 'Please ensure clearance on or before this date'
-                : 'Date will be set by the Head Instructor'}
+            <p className="text-[11px] text-slate-400 mt-1 font-medium">
+              {activeStudent.next_fee_due_date ? (
+                daysUntilDue !== null && daysUntilDue <= 4 && daysUntilDue > 0 ? (
+                  <span className="text-amber-400">
+                    ⚠️ Due in {daysUntilDue} {daysUntilDue === 1 ? 'day' : 'days'} (Auto-flagged for payment)
+                  </span>
+                ) : daysUntilDue === 0 ? (
+                  <span className="text-red-400 font-bold">
+                    🚨 Due today! Please submit fee to the instructor.
+                  </span>
+                ) : daysUntilDue !== null && daysUntilDue < 0 ? (
+                  <span className="text-red-400 font-bold">
+                    ⚠️ Overdue by {Math.abs(daysUntilDue)} {Math.abs(daysUntilDue) === 1 ? 'day' : 'days'}
+                  </span>
+                ) : (
+                  <span>Next payment cycle deadline</span>
+                )
+              ) : (
+                'Date will be set by the Head Instructor'
+              )}
             </p>
           </div>
         </div>

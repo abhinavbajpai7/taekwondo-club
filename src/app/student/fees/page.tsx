@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { db } from '@/lib/db';
 import { PaymentRecord } from '@/lib/types';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, getDaysUntilFeeDue } from '@/lib/utils';
 import { CreditCard, Receipt, CheckCircle2, AlertCircle, Smartphone, Banknote, Building } from 'lucide-react';
 
 export default function StudentFeesPage() {
@@ -36,6 +36,7 @@ export default function StudentFeesPage() {
 
   const activeStudent = currentStudent || student;
   const isPaid = activeStudent.fee_status === 'paid';
+  const daysUntilDue = getDaysUntilFeeDue(activeStudent.next_fee_due_date);
 
   return (
     <div className="space-y-6">
@@ -88,7 +89,21 @@ export default function StudentFeesPage() {
               ? formatDate(activeStudent.next_fee_due_date)
               : 'Pending Assignment'}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Decided by Admin</p>
+          <p className="text-[11px] text-slate-400 mt-1">
+            {activeStudent.next_fee_due_date ? (
+              daysUntilDue !== null && daysUntilDue <= 4 && daysUntilDue > 0 ? (
+                <span className="text-amber-400 font-medium">Due in {daysUntilDue}d (Auto-set pending)</span>
+              ) : daysUntilDue === 0 ? (
+                <span className="text-red-400 font-bold">Due today!</span>
+              ) : daysUntilDue !== null && daysUntilDue < 0 ? (
+                <span className="text-red-400 font-bold">Overdue by {Math.abs(daysUntilDue)}d</span>
+              ) : (
+                'Scheduled by instructor'
+              )
+            ) : (
+              'Decided by Admin'
+            )}
+          </p>
         </div>
 
         {/* Card 4: Last Payment Mode */}

@@ -10,6 +10,7 @@ import {
   calculateAttendancePercentage,
   calculateFeeSummary,
   getTodayDateString,
+  isFeeDueWithinDays,
 } from '../utils';
 
 // Fresh start with 0 students so the instructor can manually register all real students
@@ -69,25 +70,84 @@ class LocalDbStore {
 
 const localStore = new LocalDbStore();
 
+/**
+ * Automatically sets a student's fee status to 'pending' if their next fee due date
+ * is within 4 days (or overdue) and their current fee status is 'paid'.
+ * Persists the updated status to Supabase and local storage.
+ */
+async function syncAutoPendingFeeStatuses(students: Student[]): Promise<Student[]> {
+  const studentsToMarkPending: Student[] = [];
+
+  students.forEach((s) => {
+    if (s.fee_status === 'paid' && isFeeDueWithinDays(s.next_fee_due_date, 4)) {
+      s.fee_status = 'pending';
+      studentsToMarkPending.push(s);
+    }
+  });
+
+  if (studentsToMarkPending.length > 0) {
+    const ids = studentsToMarkPending.map((s) => s.id);
+    const nowIso = new Date().toISOString();
+
+    // 1. Sync to Supabase
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        await supabase
+          .from('students')
+          .update({ fee_status: 'pending', updated_at: nowIso })
+          .in('id', ids);
+      } catch (err) {
+        console.error('Failed to sync auto-pending fee statuses to Supabase:', err);
+      }
+    }
+
+    // 2. Sync to local storage
+    localStore.init();
+    let localChanged = false;
+    localStore.students.forEach((ls) => {
+      if (ids.includes(ls.id) && ls.fee_status !== 'pending') {
+        ls.fee_status = 'pending';
+        ls.updated_at = nowIso;
+        localChanged = true;
+      }
+    });
+    if (localChanged) {
+      localStore.persist();
+    }
+  }
+
+  return students;
+}
+
 export const db = {
   // ----------------------------------------------------
   // STUDENTS
   // ----------------------------------------------------
   async getStudents(): Promise<Student[]> {
+    let list: Student[] = [];
     const supabase = createClient();
     if (supabase) {
       const { data, error } = await supabase
         .from('students')
         .select('*')
         .order('student_code', { ascending: true });
-      if (!error && data) return data as Student[];
+      if (!error && data) {
+        list = data as Student[];
+      }
     }
 
-    localStore.init();
-    return [...localStore.students].sort((a, b) => a.student_code.localeCompare(b.student_code));
+    if (list.length === 0) {
+      localStore.init();
+      list = [...localStore.students].sort((a, b) => a.student_code.localeCompare(b.student_code));
+    }
+
+    // Run automated 4-day pending check and persistence
+    return await syncAutoPendingFeeStatuses(list);
   },
 
   async getStudentById(id: string): Promise<Student | null> {
+    let student: Student | null = null;
     const supabase = createClient();
     if (supabase) {
       const { data, error } = await supabase
@@ -95,15 +155,43 @@ export const db = {
         .select('*')
         .eq('id', id)
         .single();
-      if (!error && data) return data as Student;
+      if (!error && data) {
+        student = data as Student;
+      }
     }
 
-    localStore.init();
-    return (
-      localStore.students.find(
-        (s) => s.id === id || s.student_code.toLowerCase() === id.toLowerCase()
-      ) || null
-    );
+    if (!student) {
+      localStore.init();
+      student =
+        localStore.students.find(
+          (s) => s.id === id || s.student_code.toLowerCase() === id.toLowerCase()
+        ) || null;
+    }
+
+    // Automatically check and persist if student fee is due within 4 days
+    if (student && student.fee_status === 'paid' && isFeeDueWithinDays(student.next_fee_due_date, 4)) {
+      student.fee_status = 'pending';
+      const nowIso = new Date().toISOString();
+      if (supabase) {
+        try {
+          await supabase
+            .from('students')
+            .update({ fee_status: 'pending', updated_at: nowIso })
+            .eq('id', student.id);
+        } catch (err) {
+          console.error('Failed to sync student auto-pending status:', err);
+        }
+      }
+      localStore.init();
+      const localIndex = localStore.students.findIndex((s) => s.id === student!.id);
+      if (localIndex !== -1) {
+        localStore.students[localIndex].fee_status = 'pending';
+        localStore.students[localIndex].updated_at = nowIso;
+        localStore.persist();
+      }
+    }
+
+    return student;
   },
 
   async saveStudent(studentData: Partial<Student>): Promise<Student> {

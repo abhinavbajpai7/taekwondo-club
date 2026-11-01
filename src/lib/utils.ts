@@ -50,6 +50,53 @@ export function calculateAttendancePercentage(present: number, total: number): n
   return Math.round((present / total) * 10000) / 100;
 }
 
+/**
+ * Returns true if the next fee due date is within the specified days (default: 4 days) or overdue.
+ */
+export function isFeeDueWithinDays(nextFeeDueDate?: string | null, daysThreshold: number = 4): boolean {
+  if (!nextFeeDueDate) return false;
+  const parts = nextFeeDueDate.split('-');
+  if (parts.length !== 3) return false;
+  const dueYear = parseInt(parts[0], 10);
+  const dueMonth = parseInt(parts[1], 10) - 1;
+  const dueDay = parseInt(parts[2], 10);
+
+  const dueDate = new Date(dueYear, dueMonth, dueDay);
+  if (isNaN(dueDate.getTime())) return false;
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const diffTime = dueDate.getTime() - today.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+  return diffDays <= daysThreshold;
+}
+
+/**
+ * Returns the exact difference in days between today and next_fee_due_date.
+ * > 0: days in future
+ * = 0: today
+ * < 0: overdue by Math.abs(x) days
+ */
+export function getDaysUntilFeeDue(nextFeeDueDate?: string | null): number | null {
+  if (!nextFeeDueDate) return null;
+  const parts = nextFeeDueDate.split('-');
+  if (parts.length !== 3) return null;
+  const dueYear = parseInt(parts[0], 10);
+  const dueMonth = parseInt(parts[1], 10) - 1;
+  const dueDay = parseInt(parts[2], 10);
+
+  const dueDate = new Date(dueYear, dueMonth, dueDay);
+  if (isNaN(dueDate.getTime())) return null;
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const diffTime = dueDate.getTime() - today.getTime();
+  return Math.round(diffTime / (1000 * 60 * 60 * 24));
+}
+
 export function calculateFeeSummary(student: Student, payments: PaymentRecord[]): StudentFeeSummary {
   const studentPayments = payments.filter((p) => p.student_id === student.id);
   const totalPaid = studentPayments.reduce((sum, p) => sum + Number(p.amount), 0);
