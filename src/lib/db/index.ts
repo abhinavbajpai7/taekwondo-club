@@ -11,6 +11,7 @@ import {
   calculateFeeSummary,
   getTodayDateString,
   isFeeDueWithinDays,
+  sortStudentsAlphabetically,
 } from '../utils';
 
 // Fresh start with 0 students so the instructor can manually register all real students
@@ -130,8 +131,7 @@ export const db = {
     if (supabase) {
       const { data, error } = await supabase
         .from('students')
-        .select('*')
-        .order('student_code', { ascending: true });
+        .select('*');
       if (!error && data) {
         list = data as Student[];
       }
@@ -139,11 +139,14 @@ export const db = {
 
     if (list.length === 0) {
       localStore.init();
-      list = [...localStore.students].sort((a, b) => a.student_code.localeCompare(b.student_code));
+      list = [...localStore.students];
     }
 
     // Run automated 4-day pending check and persistence
-    return await syncAutoPendingFeeStatuses(list);
+    const synced = await syncAutoPendingFeeStatuses(list);
+
+    // Arrange students in alphabetical order regardless of uppercase or lowercase
+    return sortStudentsAlphabetically(synced);
   },
 
   async getStudentById(id: string): Promise<Student | null> {

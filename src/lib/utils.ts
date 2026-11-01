@@ -97,6 +97,19 @@ export function getDaysUntilFeeDue(nextFeeDueDate?: string | null): number | nul
   return Math.round(diffTime / (1000 * 60 * 60 * 24));
 }
 
+/**
+ * Sorts students alphabetically by their name in a case-insensitive manner (regardless of uppercase or lowercase).
+ */
+export function sortStudentsAlphabetically(students: Student[]): Student[] {
+  return [...students].sort((a, b) => {
+    const nameA = (a.name || '').trim().toLowerCase();
+    const nameB = (b.name || '').trim().toLowerCase();
+    const cmp = nameA.localeCompare(nameB);
+    if (cmp !== 0) return cmp;
+    return (a.student_code || '').localeCompare(b.student_code || '');
+  });
+}
+
 export function calculateFeeSummary(student: Student, payments: PaymentRecord[]): StudentFeeSummary {
   const studentPayments = payments.filter((p) => p.student_id === student.id);
   const totalPaid = studentPayments.reduce((sum, p) => sum + Number(p.amount), 0);

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { db } from '@/lib/db';
 import { Student, PaymentMethod, FeeStatus } from '@/lib/types';
-import { formatDate, getTodayDateString, addDays, getDaysUntilFeeDue } from '@/lib/utils';
+import { formatDate, getTodayDateString, addDays, getDaysUntilFeeDue, sortStudentsAlphabetically } from '@/lib/utils';
 import {
   CreditCard,
   Search,
@@ -56,7 +56,7 @@ export default function FeesManagementPage() {
 
   // Filtered List
   const filteredStudents = useMemo(() => {
-    return activeStudents.filter((s) => {
+    const list = activeStudents.filter((s) => {
       const q = searchQuery.toLowerCase();
       const matchSearch =
         s.name.toLowerCase().includes(q) ||
@@ -68,6 +68,7 @@ export default function FeesManagementPage() {
       if (statusFilter === 'paid') return s.fee_status === 'paid';
       return true;
     });
+    return sortStudentsAlphabetically(list);
   }, [activeStudents, searchQuery, statusFilter]);
 
   // Open Mark Paid Modal

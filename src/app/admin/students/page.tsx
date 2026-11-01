@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { db } from '@/lib/db';
 import { Student } from '@/lib/types';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, sortStudentsAlphabetically } from '@/lib/utils';
 import {
   UserPlus,
   Search,
@@ -41,20 +41,22 @@ export default function StudentsListPage() {
     }
   };
 
-  const filteredStudents = students.filter((s) => {
-    const query = searchQuery.toLowerCase();
-    const matchesSearch =
-      s.name.toLowerCase().includes(query) ||
-      s.student_code.toLowerCase().includes(query) ||
-      s.parent_name.toLowerCase().includes(query) ||
-      s.parent_phone.includes(query);
+  const filteredStudents = sortStudentsAlphabetically(
+    students.filter((s) => {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch =
+        s.name.toLowerCase().includes(query) ||
+        s.student_code.toLowerCase().includes(query) ||
+        s.parent_name.toLowerCase().includes(query) ||
+        s.parent_phone.includes(query);
 
-    if (!matchesSearch) return false;
+      if (!matchesSearch) return false;
 
-    if (filterActive === 'active') return s.active;
-    if (filterActive === 'inactive') return !s.active;
-    return true;
-  });
+      if (filterActive === 'active') return s.active;
+      if (filterActive === 'inactive') return !s.active;
+      return true;
+    })
+  );
 
   const activeCount = students.filter((s) => s.active).length;
   const inactiveCount = students.filter((s) => !s.active).length;

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { db } from '@/lib/db';
 import { Student, AttendanceStatus } from '@/lib/types';
-import { getTodayDateString, addDays, formatDate } from '@/lib/utils';
+import { getTodayDateString, addDays, formatDate, sortStudentsAlphabetically } from '@/lib/utils';
 import {
   ChevronLeft,
   ChevronRight,
@@ -34,7 +34,7 @@ export default function AttendanceRegisterPage() {
     setMessage(null);
 
     const allStudents = await db.getStudents();
-    const activeStudents = allStudents.filter((s) => s.active);
+    const activeStudents = sortStudentsAlphabetically(allStudents.filter((s) => s.active));
     setStudents(activeStudents);
 
     const existingRecords = await db.getAttendanceByDate(dateStr);

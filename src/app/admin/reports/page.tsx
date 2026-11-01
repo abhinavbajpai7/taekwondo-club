@@ -9,6 +9,7 @@ import {
   calculateAttendancePercentage,
   calculateFeeSummary,
   exportToCsv,
+  sortStudentsAlphabetically,
 } from '@/lib/utils';
 import { BarChart3, Download, Calendar, Users, CreditCard } from 'lucide-react';
 
@@ -25,7 +26,7 @@ export default function ReportsPage() {
       db.getAttendanceByDate(''), // Loads all cached
       db.getAllPayments(),
     ]);
-    setStudents(stus);
+    setStudents(sortStudentsAlphabetically(stus));
     setAttendance(att);
     setPayments(pays);
     setLoading(false);

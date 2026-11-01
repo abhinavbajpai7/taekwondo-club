@@ -7,6 +7,7 @@ import { Student, DashboardStats } from '@/lib/types';
 import {
   formatDate,
   getTodayDateString,
+  sortStudentsAlphabetically,
 } from '@/lib/utils';
 import {
   Users,
@@ -47,10 +48,10 @@ export default function AdminDashboardPage() {
     loadDashboard();
   }, [loadDashboard]);
 
-  // Find top students with pending fee status
-  const studentsWithDues = students
-    .filter((s) => s.active && (s.fee_status === 'pending' || !s.fee_status))
-    .slice(0, 5);
+  // Find top students with pending fee status arranged alphabetically
+  const studentsWithDues = sortStudentsAlphabetically(
+    students.filter((s) => s.active && (s.fee_status === 'pending' || !s.fee_status))
+  ).slice(0, 5);
 
   return (
     <div className="space-y-6">
