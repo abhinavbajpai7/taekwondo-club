@@ -215,43 +215,62 @@ export default function AttendanceRegisterPage() {
         </div>
       </div>
 
-      {/* Quick Action Toolbar & Live Stats */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/60 border border-slate-800/80 rounded-xl p-3">
+      {/* Top Action Toolbar with Save Attendance Button */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Live Counters */}
-        <div className="flex items-center gap-4 text-xs">
+        <div className="flex items-center gap-3 sm:gap-4 text-xs flex-wrap">
           <span className="text-slate-400">
-            Total Active: <strong className="text-white">{students.length}</strong>
+            Active: <strong className="text-white">{students.length}</strong>
           </span>
-          <span className="text-emerald-400 flex items-center gap-1">
+          <span className="text-emerald-400 font-semibold flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
             Present: <strong>{presentCount}</strong>
           </span>
-          <span className="text-red-400 flex items-center gap-1">
+          <span className="text-red-400 font-semibold flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-red-500"></span>
             Absent: <strong>{absentCount}</strong>
           </span>
           {unmarkedCount > 0 && (
-            <span className="text-slate-400 flex items-center gap-1">
+            <span className="text-slate-400 flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-slate-500"></span>
               Unmarked: <strong>{unmarkedCount}</strong>
             </span>
           )}
         </div>
 
-        {/* Quick Fill Buttons */}
-        <div className="flex items-center gap-2">
+        {/* Action Controls & Top Save Button */}
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <button
+            type="button"
             onClick={handleMarkAllPresent}
-            className="px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition flex items-center gap-1.5"
+            className="px-3 py-2.5 rounded-xl bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition flex items-center gap-1.5 min-h-[44px]"
+            title="Mark all students present"
           >
-            <CheckCheck className="w-3.5 h-3.5" />
-            <span>Mark All Present</span>
+            <CheckCheck className="w-4 h-4" />
+            <span className="hidden xs:inline">All Present</span>
+            <span className="xs:hidden">All P</span>
           </button>
           <button
+            type="button"
             onClick={handleClearAll}
-            className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 text-xs transition"
+            className="px-3 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 text-xs font-semibold transition min-h-[44px]"
+            title="Reset selections"
           >
             Clear
+          </button>
+
+          {/* Primary Top Save Attendance Button */}
+          <button
+            type="button"
+            onClick={() => setConfirmModalOpen(true)}
+            disabled={saving || students.length === 0}
+            className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-red-600/30 transition flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 min-h-[44px]"
+          >
+            <Save className="w-4 h-4" />
+            <span>{saving ? 'Saving...' : 'Save Attendance'}</span>
+            {hasUnsavedChanges && (
+              <span className="w-2 h-2 rounded-full bg-amber-300 animate-ping" title="Unsaved changes" />
+            )}
           </button>
         </div>
       </div>
@@ -369,35 +388,26 @@ export default function AttendanceRegisterPage() {
               );
             })}
           </div>
+
+          {/* Table Footer (Static In-Flow, Never Covers Any Mark Button) */}
+          <div className="p-4 bg-slate-950/80 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <span className="text-slate-400">
+              Summary: <strong className="text-emerald-400">{presentCount} Present</strong> •{' '}
+              <strong className="text-red-400">{absentCount} Absent</strong>
+              {unmarkedCount > 0 && <span> • <strong className="text-slate-300">{unmarkedCount} Unmarked</strong></span>}
+            </span>
+            <button
+              type="button"
+              onClick={() => setConfirmModalOpen(true)}
+              disabled={saving || students.length === 0}
+              className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-md shadow-red-600/30 transition flex items-center justify-center gap-1.5 disabled:opacity-50 active:scale-95 self-end sm:self-auto min-h-[40px]"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>{saving ? 'Saving...' : 'Save Attendance'}</span>
+            </button>
+          </div>
         </div>
       )}
-
-      {/* Floating / Sticky Save Bottom Bar */}
-      <div className="sticky bottom-20 md:bottom-6 z-20 bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-2xl p-4 shadow-2xl flex items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-white">
-              {formatDate(selectedDate)}
-            </span>
-            {hasUnsavedChanges && (
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" title="Unsaved changes"></span>
-            )}
-          </div>
-          <p className="text-[11px] text-slate-400">
-            {presentCount} Present • {absentCount} Absent • {unmarkedCount} Unmarked
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setConfirmModalOpen(true)}
-          disabled={saving || students.length === 0}
-          className="px-6 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm shadow-lg shadow-red-600/30 transition flex items-center gap-2 disabled:opacity-50 active:scale-95"
-        >
-          <Save className="w-4 h-4" />
-          <span>{saving ? 'Saving...' : 'Save Attendance'}</span>
-        </button>
-      </div>
 
       {/* Confirmation Modal (Phase 10 Safety Feature) */}
       {confirmModalOpen && (

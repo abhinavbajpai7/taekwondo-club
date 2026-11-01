@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { db } from '@/lib/db';
-import { Student, PaymentRecord, DashboardStats } from '@/lib/types';
+import { Student, DashboardStats } from '@/lib/types';
 import {
   formatDate,
   getTodayDateString,
@@ -26,22 +26,19 @@ import {
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
-  const [recentPayments, setRecentPayments] = useState<PaymentRecord[]>([]);
   const [todayMarked, setTodayMarked] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
-    const [st, stus, pays, todayAtt] = await Promise.all([
+    const [st, stus, todayAtt] = await Promise.all([
       db.getDashboardStats(),
       db.getStudents(),
-      db.getAllPayments(),
       db.getAttendanceByDate(getTodayDateString()),
     ]);
 
     setStats(st);
     setStudents(stus);
-    setRecentPayments(pays.slice(0, 5));
     setTodayMarked(todayAtt.length > 0);
     setLoading(false);
   }, []);
@@ -203,110 +200,63 @@ export default function AdminDashboardPage() {
         </Link>
       </div>
 
-      {/* Two Column Layout: Pending Dues & Recent Payments */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pending Dues Alert Card */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-sm text-white flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-red-500" />
-              <span>Pending Fee Dues</span>
-            </h3>
-            <Link
-              href="/admin/fees"
-              className="text-xs font-medium text-red-400 hover:text-red-300 flex items-center gap-1"
-            >
-              <span>View All</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          {studentsWithDues.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-400">
-              <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-1.5" />
-              All active students are marked Paid!
+      {/* Pending Fee Dues Focus Section */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center">
+              <AlertCircle className="w-4 h-4" />
             </div>
-          ) : (
-            <div className="divide-y divide-slate-800/80">
-              {studentsWithDues.map((student) => (
-                <div key={student.id} className="py-3 flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-[11px] font-bold text-red-400">
-                        {student.student_code}
-                      </span>
-                      <span className="font-semibold text-xs text-white">{student.name}</span>
-                    </div>
-                    <span className="text-[11px] text-slate-400">
-                      Next Due: {student.next_fee_due_date ? formatDate(student.next_fee_due_date) : 'Pending assignment'}
-                    </span>
-                  </div>
+            <div>
+              <h3 className="font-bold text-sm text-white">Pending Fee Dues</h3>
+              <p className="text-[11px] text-slate-400">Students awaiting fee submission or within 4-day due window</p>
+            </div>
+          </div>
+          <Link
+            href="/admin/fees"
+            className="text-xs font-semibold text-red-400 hover:text-red-300 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700/80 transition"
+          >
+            <span>Manage All Fees</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
 
-                  <div className="text-right">
-                    <span className="inline-block px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-bold text-[10px] mb-1">
-                      Pending
+        {studentsWithDues.length === 0 ? (
+          <div className="py-8 text-center text-xs text-slate-400">
+            <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-1.5" />
+            All active students are marked Paid!
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-800/80">
+            {studentsWithDues.map((student) => (
+              <div key={student.id} className="py-3 flex items-center justify-between hover:bg-slate-800/30 px-2 rounded-xl transition">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-red-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+                      {student.student_code}
                     </span>
-                    <div>
-                      <Link
-                        href="/admin/fees"
-                        className="text-[10px] text-slate-400 hover:text-slate-200 underline"
-                      >
-                        Manage
-                      </Link>
-                    </div>
+                    <span className="font-semibold text-sm text-white">{student.name}</span>
                   </div>
+                  <span className="text-xs text-slate-400 mt-0.5 block">
+                    Next Due: {student.next_fee_due_date ? formatDate(student.next_fee_due_date) : 'Pending assignment'}
+                  </span>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* Recent Payments Card */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-sm text-white flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-emerald-400" />
-              <span>Recent Payments</span>
-            </h3>
-            <Link
-              href="/admin/fees"
-              className="text-xs font-medium text-red-400 hover:text-red-300 flex items-center gap-1"
-            >
-              <span>View Ledger</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
+                <div className="flex items-center gap-3">
+                  <span className="inline-block px-2.5 py-1 rounded-full bg-red-500/20 text-red-400 font-bold text-xs">
+                    Pending
+                  </span>
+                  <Link
+                    href="/admin/fees"
+                    className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-semibold shadow-sm transition"
+                  >
+                    Mark Paid
+                  </Link>
+                </div>
+              </div>
+            ))}
           </div>
-
-          {recentPayments.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-400">
-              No payments logged yet.
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-800/80">
-              {recentPayments.slice(0, 5).map((pay) => {
-                const student = students.find((s) => s.id === pay.student_id);
-                return (
-                  <div key={pay.id} className="py-3 flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-xs text-white">
-                        {student?.name || 'Student'} ({student?.student_code || '—'})
-                      </p>
-                      <p className="text-[11px] text-slate-400">
-                        {formatDate(pay.payment_date)} • <span className="capitalize">{pay.payment_method}</span>
-                      </p>
-                    </div>
-
-                    <div className="text-right">
-                      <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[10px] uppercase tracking-wider">
-                        Paid • {pay.payment_method}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );
