@@ -105,7 +105,7 @@ export default function StudentFeesPage() {
 
       {/* Receipts Ledger */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-        <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div className="px-4 sm:px-6 py-4 border-b border-slate-800 flex items-center justify-between">
           <h3 className="font-bold text-sm text-white flex items-center gap-2">
             <Receipt className="w-4 h-4 text-emerald-400" />
             <span>Payment Receipts Ledger</span>
@@ -124,7 +124,7 @@ export default function StudentFeesPage() {
             {payments.map((p) => (
               <div
                 key={p.id}
-                className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-800/30 transition"
+                className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-800/30 transition"
               >
                 <div>
                   <div className="flex items-center gap-2">

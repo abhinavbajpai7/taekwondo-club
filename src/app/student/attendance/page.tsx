@@ -145,7 +145,7 @@ export default function StudentAttendancePage() {
 
       {/* Attendance History List */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-        <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div className="px-4 sm:px-6 py-4 border-b border-slate-800 flex items-center justify-between">
           <h3 className="font-bold text-sm text-white">Daily Training Sessions Log</h3>
           <span className="text-xs text-slate-400">{filteredAttendance.length} Entries</span>
         </div>
@@ -161,33 +161,33 @@ export default function StudentAttendancePage() {
             {filteredAttendance.map((item) => (
               <div
                 key={item.id}
-                className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-800/30 transition"
+                className="px-4 sm:px-6 py-3.5 flex items-center justify-between hover:bg-slate-800/30 transition gap-2"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                   {item.status === 'present' ? (
-                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
                       <CheckCircle2 className="w-4 h-4" />
                     </div>
                   ) : (
-                    <div className="w-8 h-8 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center shrink-0">
                       <XCircle className="w-4 h-4" />
                     </div>
                   )}
-                  <div>
-                    <p className="text-sm font-semibold text-white">
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-semibold text-white truncate">
                       {formatDate(item.attendance_date, {
-                        weekday: 'long',
+                        weekday: 'short',
                         day: '2-digit',
                         month: 'short',
                         year: 'numeric',
                       })}
                     </p>
-                    <p className="text-[11px] text-slate-500 font-mono">{item.attendance_date}</p>
+                    <p className="text-[10px] sm:text-[11px] text-slate-500 font-mono">{item.attendance_date}</p>
                   </div>
                 </div>
 
                 <span
-                  className={`text-xs font-bold px-3 py-1 rounded-full ${
+                  className={`text-[11px] sm:text-xs font-bold px-2.5 sm:px-3 py-1 rounded-full shrink-0 ${
                     item.status === 'present'
                       ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                       : 'bg-red-500/15 text-red-400 border border-red-500/30'

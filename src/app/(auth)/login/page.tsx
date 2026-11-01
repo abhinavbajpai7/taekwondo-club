@@ -168,11 +168,11 @@ export default function LoginPage() {
                 required
                 value={studentPassword}
                 onChange={(e) => setStudentPassword(e.target.value)}
-                placeholder="Enter your student password"
+                placeholder="Enter password"
                 className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50 text-center"
               />
               <p className="text-[11px] text-slate-500 mt-1.5 text-center">
-                Provided by your coach/instructor at registration.
+                Enter your student password (or Admin master password).
               </p>
             </div>
 
