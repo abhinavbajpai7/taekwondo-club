@@ -119,7 +119,7 @@ export default function StudentProfilePage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-8">
+    <div className="max-w-2xl mx-auto space-y-6">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
@@ -345,7 +345,7 @@ export default function StudentProfilePage() {
         </div>
 
         {/* Submit Button */}
-        <div className="pt-2 pb-6">
+        <div className="pt-2">
           <button
             type="submit"
             disabled={saving}

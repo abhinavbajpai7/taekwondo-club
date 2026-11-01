@@ -105,10 +105,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto min-w-0 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-28 md:pb-8">
+      <main className="flex-1 overflow-y-auto min-w-0 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-20 md:pb-8">
         {children}
-        {/* Physical non-collapsible bottom spacer to guarantee fixed mobile nav bar never overlaps content */}
-        <div className="h-28 md:hidden w-full shrink-0" aria-hidden="true" />
       </main>
 
       {/* Mobile Bottom Navigation Bar (Optimized for One-Handed Gym Use) */}

@@ -69,7 +69,7 @@ export default function StudentDashboardPage() {
   const attendanceRate = calculateAttendancePercentage(presentCount, totalSessions);
 
   return (
-    <div className="space-y-6 pb-6">
+    <div className="space-y-6">
       {/* Welcome Banner */}
       <div className="bg-gradient-to-r from-red-950/40 via-slate-900 to-slate-900 border border-red-900/30 rounded-2xl p-5 sm:p-6 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
